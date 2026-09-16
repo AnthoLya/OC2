@@ -1,5 +1,0 @@
-#ceci est un essai pour vori comment Git reagit
-recherche = requests.get('https://books.toscrape.com/')
-#nouvel essai car je suis passé de vs code a pycharm
-print(recherche.text)
-
