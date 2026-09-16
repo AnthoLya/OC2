@@ -1,1 +1,3 @@
 #ceci est un essai pour vori comment Git reagit
+requests.get(https://books.toscrape.com/)
+#nouvel essai car je suis passé de vs code a pycharm
