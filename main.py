@@ -6,3 +6,4 @@ soup = BeautifulSoup(html_livre.text, 'html.parser')
 recherche = soup.find_all(['tr'])
 for ligne in recherche:
     print(ligne.get_text(" --> ", strip=True))
+#POUR CHERCHER dans les categories, balise <li> puis <a href> et dans chaque categorie prendre les <div class> puis le code ci dessus
