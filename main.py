@@ -1,9 +1,24 @@
+#BASE
 import requests
 from bs4 import BeautifulSoup
-html_livre = requests.get('https://books.toscrape.com/catalogue/full-moon-over-noahs-ark-an-odyssey-to-mount-ararat-and-beyond_811/index.html')
+import csv
+dictionnaire = {}
+#1 je recup le html
+reponse = requests.get("https://books.toscrape.com/catalogue/starving-hearts-triangular-trade-trilogy-1_990/index.html")
+soup = BeautifulSoup(reponse.text, "html.parser")
 
-soup = BeautifulSoup(html_livre.text, 'html.parser')
-recherche = soup.find_all(['tr'])
-for ligne in recherche:
-    print(ligne.get_text(" --> ", strip=True))
-#POUR CHERCHER dans les categories, balise <li> puis <a href> et dans chaque categorie prendre les <div class> puis le code ci dessus
+#2 je cherche une info
+lignes = soup.find_all("tr")
+titre = soup.find("h1").get_text(strip=True)
+dictionnaire["titre"] = titre
+for ligne in lignes:
+    valeur = ligne.find("th").get_text(strip=True)
+    donnee = ligne.find("td").get_text(strip=True)
+    dictionnaire[valeur] = donnee
+
+print(dictionnaire)
+
+with open("data.csv", "w", newline="", encoding="utf-8") as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=dictionnaire.keys())
+    writer.writeheader()
+    writer.writerow(dictionnaire)
