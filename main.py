@@ -1,7 +1,19 @@
-#BASE
+#BASE des phases
 import requests
 from bs4 import BeautifulSoup
 import csv
+
+def convertir_en_nombre(a):
+    nombre = ""
+    texte = a
+    for caractere in texte:
+        if caractere.isdigit() or caractere == ".":
+            nombre = nombre + caractere
+    nombre = float(nombre)
+    return nombre
+
+#phase 1
+
 dictionnaire = {}
 
 # je recup le html
@@ -53,28 +65,24 @@ for caractere in texte:
 nombre = int(nombre)
 dictionnaire["number_available"] = nombre
 
+# le prix je le garde en nombre aussi
+dictionnaire["price_excluding_tax"] = convertir_en_nombre(dictionnaire["price_excluding_tax"])
+dictionnaire["price_including_tax"] = convertir_en_nombre(dictionnaire["price_including_tax"])
+
+
 # je remets tout dans l ordre
 dictionnaire_final = {
     "product_page_url": dictionnaire["product_page_url"],
-    "universal_product_code (upc)": dictionnaire["UPC"],
+    "universal_product_code (upc)": dictionnaire["universal_product_code (upc)"],
     "title": dictionnaire["title"],
-    "price_including_tax": dictionnaire["Price (incl. tax)"],
-    "price_excluding_tax": dictionnaire["Price (excl. tax)"],
+    "price_including_tax": dictionnaire["price_including_tax"],
+    "price_excluding_tax": dictionnaire["price_excluding_tax"],
     "number_available": dictionnaire["number_available"],
     "product_description": dictionnaire["product_description"],
     "category": dictionnaire["category"],
     "review_rating": dictionnaire["review_rating"],
     "image_url": dictionnaire["image_url"]
 }
-
-#chercher si il y a next en bas de page pr page suivante
-suivant = soup.find("li", class_="next")
-if suivant:
-    lien_suivant = suivant.find("a")["href"]
-    print(lien_suivant)
-else:
-    print("pas de page suivante")
-
 
 # je fais mon fichier CSV
 with open("data.csv", "w", newline="", encoding="utf-8") as csvfile:
@@ -83,20 +91,27 @@ with open("data.csv", "w", newline="", encoding="utf-8") as csvfile:
     writer.writerow(dictionnaire_final)
 
 
-#2eme phase : extraire tout les urls d'une categorie
+#phase 2 : extraire tous les urls d'une categorie
 tous_les_urls = {}
+url = "https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html"
+while url:
+    reponse = requests.get(url)
+    soup = BeautifulSoup(reponse.text, "html.parser")
+    suivant = soup.find("li", class_="next")
+    urls = soup.find_all("article", class_="product_pod")
 
-url = "https://books.toscrape.com/catalogue/category/books/travel_2/index.html"
-reponse = requests.get(url)
-soup = BeautifulSoup(reponse.text, "html.parser")
-urls = soup.find_all("article", class_="product_pod")
+    for resultat in urls:
+        titre = resultat.find("h3").get_text(strip=True)
+        lien_url = resultat.find("a")["href"]
+        lien_url = lien_url.replace("../../../", "https://books.toscrape.com/catalogue/")
+        tous_les_urls[titre] = lien_url
 
-for resultat in urls:
-    titre = resultat.find("h3").get_text(strip=True)
-    lien_url = resultat.find("a")["href"]
-    lien_url = lien_url.replace("../../../", "https://books.toscrape.com/catalogue/")
-    tous_les_urls[titre] = lien_url
-print(tous_les_urls)
+    # chercher si il y a next en bas de page pr page suivante
+    if suivant:
+        lien_suivant = suivant.find("a")["href"]
+        url = "https://books.toscrape.com/catalogue/category/books/historical-fiction_4/" + lien_suivant
+    else:
+        url = None
 
 #je vais un csv avec tous les urls
 with open("data_urls.csv", "w", newline="", encoding="utf-8") as csvfile:
@@ -104,19 +119,17 @@ with open("data_urls.csv", "w", newline="", encoding="utf-8") as csvfile:
     writer.writeheader()
     writer.writerow(tous_les_urls)
 
-# je vais utiliser mes urls trouvées pour rechercher dans les pages des livres les infos
+    # je vais utiliser mes urls trouvées pour rechercher dans les pages des livres les infos
 tous_les_livres = []
-
-
 for url in tous_les_urls.values():
     dictionnaire_categorie = {}
     print(url)
-# je recup le html
+    # je recup le html
     reponse = requests.get(url)
     soup = BeautifulSoup(reponse.text, "html.parser")
 
 
-# je cherche une info et l ajoute au dictionnaire
+    # je cherche une info et l ajoute au dictionnaire
     lignes = soup.find_all("tr")
     dictionnaire_categorie["product_page_url"] = url
 
@@ -143,14 +156,14 @@ for url in tous_les_urls.values():
     dictionnaire_categorie["image_url"] = image_url
 
 
-# je change les noms recupérés en td et th par ceux demandés
+    # je change les noms recupérés en td et th par ceux demandés
     dictionnaire_categorie["universal_product_code (upc)"] = dictionnaire_categorie["UPC"]
     dictionnaire_categorie["price_including_tax"] = dictionnaire_categorie["Price (incl. tax)"]
     dictionnaire_categorie["price_excluding_tax"] = dictionnaire_categorie["Price (excl. tax)"]
     dictionnaire_categorie["number_available"] = dictionnaire_categorie["Availability"]
 
 
-# le available je ne garde que le nombre
+    # le available je ne garde que le nombre
     nombre = ""
     texte = dictionnaire_categorie["number_available"]
     for caractere in texte:
@@ -159,13 +172,17 @@ for url in tous_les_urls.values():
     nombre = int(nombre)
     dictionnaire_categorie["number_available"] = nombre
 
-# je remets tout dans l ordre
+    # le prix je le garde en nombre aussi
+    dictionnaire_categorie["price_excluding_tax"] = convertir_en_nombre(dictionnaire_categorie["price_excluding_tax"])
+    dictionnaire_categorie["price_including_tax"] = convertir_en_nombre(dictionnaire_categorie["price_including_tax"])
+
+    # je remets tout dans l ordre
     dictionnaire_categorie_final = {
         "product_page_url": dictionnaire_categorie["product_page_url"],
-        "universal_product_code (upc)": dictionnaire_categorie["UPC"],
+        "universal_product_code (upc)": dictionnaire_categorie["universal_product_code (upc)"],
         "title": dictionnaire_categorie["title"],
-        "price_including_tax": dictionnaire_categorie["Price (incl. tax)"],
-        "price_excluding_tax": dictionnaire_categorie["Price (excl. tax)"],
+        "price_including_tax": dictionnaire_categorie["price_including_tax"],
+        "price_excluding_tax": dictionnaire_categorie["price_excluding_tax"],
         "number_available": dictionnaire_categorie["number_available"],
         "product_description": dictionnaire_categorie["product_description"],
         "category": dictionnaire_categorie["category"],
