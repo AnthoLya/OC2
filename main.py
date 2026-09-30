@@ -67,7 +67,7 @@ dictionnaire_final = {
     "image_url": dictionnaire["image_url"]
 }
 
-
+#chercher si il y a next en bas de page pr page suivante
 suivant = soup.find("li", class_="next")
 if suivant:
     lien_suivant = suivant.find("a")["href"]
