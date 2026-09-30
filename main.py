@@ -66,13 +66,15 @@ dictionnaire_final = {
     "review_rating": dictionnaire["review_rating"],
     "image_url": dictionnaire["image_url"]
 }
-suivant = soup.find("li", class_="next")
 
+
+suivant = soup.find("li", class_="next")
 if suivant:
     lien_suivant = suivant.find("a")["href"]
     print(lien_suivant)
 else:
     print("pas de page suivante")
+
 
 # je fais mon fichier CSV
 with open("data.csv", "w", newline="", encoding="utf-8") as csvfile:
