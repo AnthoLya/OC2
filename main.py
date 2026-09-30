@@ -219,13 +219,24 @@ for categorie in url_categories:
     for url in tous_les_urls_categories.values():
         print("boucle for dans les categories")
         #la jai bien l url de chaques categories
-
-
+        while url:
+            reponse = requests.get(url)
+            soup = BeautifulSoup(reponse.text, "html.parser")
+            suivant = soup.find("li", class_="next")
+            urls = soup.find_all("article", class_="product_pod")
+            urls_livres = {}
+            # pause ici ca fait des doublons
+            for resultat in urls:
+                titre_livre = resultat.find("h3").get_text(strip=True)
+                lien_url = resultat.find("a")["href"]
+                lien_url = lien_url.replace("../../../", "https://books.toscrape.com/catalogue/")
+                urls_livres[titre_livre] = lien_url
+            print(urls_livres)
         # je fais mon fichier CSV pour chaque categorie
     data_categorie = "data_" + titre_categorie + ".csv"
     print("CSV en cours")
     with open(data_categorie, "w", newline="", encoding="utf-8") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=tous_les_livres[0].keys())
+        writer = csv.DictWriter(csvfile, fieldnames=urls_livres[0].keys())
         writer.writeheader()
         for livre in tous_les_livres:
             writer.writerow(livre)
