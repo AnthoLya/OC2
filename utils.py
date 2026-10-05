@@ -3,6 +3,10 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 from urllib.parse import urljoin
+import os
+import re
+
+os.makedirs("data/images", exist_ok=True)
 
 
 def convertir_en_nombre(a):
@@ -14,13 +18,18 @@ def convertir_en_nombre(a):
     nombre = float(nombre)
     return nombre
 
+def nettoyer_nom_fichier(nom):
+    nom = re.sub(r'[\\/:*?"<>|]', '', nom)
+    return nom.strip()
 
 def extraire_urls_categories(url_base):
     reponse = requests.get(url_base)
     soup = BeautifulSoup(reponse.text, "html.parser")
     url_categories = soup.find("ul", class_="nav nav-list").find_all("li")
     tous_les_urls_categories = {}
-    for categorie in url_categories:
+    for categorie in url_categories[1:]:
+        #avec le [1:]  car ej veux commener par la premeire categorie et pas books ou il y a tout avec les 50apges
+
         titre_categorie = categorie.find("a").get_text(strip=True)
         url_categorie = categorie.find("a")["href"]
         url_categorie = "https://books.toscrape.com/" + url_categorie
@@ -85,9 +94,14 @@ def extraire_infos_livre(url):
     dictionnaire_categorie["category"]  = category[2].get_text(strip=True)
 
     image = soup.find("img")
-    image_url = image["src"]
-    image_url = image_url.replace("../../", "https://books.toscrape.com/")
+    image_url = urljoin(url, image["src"])
     dictionnaire_categorie["image_url"] = image_url
+
+    nom_image = nettoyer_nom_fichier(dictionnaire_categorie["title"])
+    reponse = requests.get(image_url)
+    with open(f"data/images/{nom_image}.jpg", "wb") as fichier:
+        fichier.write(reponse.content)
+
 
     # je change les noms recupérés en td et th par ceux demandés
     dictionnaire_categorie["universal_product_code (upc)"] = dictionnaire_categorie["UPC"]
