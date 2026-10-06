@@ -45,6 +45,7 @@ def extraire_urls_livres(url_categorie):
         soup = BeautifulSoup(reponse.text, "html.parser")
         urls = soup.find_all("article", class_="product_pod")
         for resultat in urls:
+
             titre_livre = resultat.find("h3").get_text(strip=True)
             lien_url = resultat.find("a")["href"]
             lien_url = urljoin(url_categorie, lien_url)
@@ -98,6 +99,8 @@ def extraire_infos_livre(url):
     dictionnaire_categorie["image_url"] = image_url
 
     nom_image = nettoyer_nom_fichier(dictionnaire_categorie["title"])
+
+    dictionnaire_categorie["lien_image"] = f"images/{nom_image}.jpg"
     reponse = requests.get(image_url)
     with open(f"data/images/{nom_image}.jpg", "wb") as fichier:
         fichier.write(reponse.content)
@@ -133,7 +136,8 @@ def extraire_infos_livre(url):
         "product_description": dictionnaire_categorie["product_description"],
         "category": dictionnaire_categorie["category"],
         "review_rating": dictionnaire_categorie["review_rating"],
-        "image_url": dictionnaire_categorie["image_url"]
+        "image_url": dictionnaire_categorie["image_url"],
+        "lien_image": dictionnaire_categorie["lien_image"]
     }
 
     return dictionnaire_categorie_final
@@ -141,7 +145,6 @@ def extraire_infos_livre(url):
 
 def charger_csv(titre_categorie, livres):
     data_categorie = "data/data_" + titre_categorie + ".csv"
-    print("CSV en cours")
     with open(data_categorie, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile,fieldnames=livres[0].keys())
         writer.writeheader()
