@@ -58,7 +58,7 @@ def extraire_urls_livres(url_categorie):
     return urls_livres
 
 
-def extraire_infos_livre(url):
+def extraire_infos_livre(url, n):
     dictionnaire_categorie = {}
 
     # je recup le html
@@ -99,8 +99,9 @@ def extraire_infos_livre(url):
     dictionnaire_categorie["image_url"] = image_url
 
     nom_image = nettoyer_nom_fichier(dictionnaire_categorie["title"])
-
+    nom_image = f"{n:05d} - {nom_image}"
     dictionnaire_categorie["lien_image"] = f"images/{nom_image}.jpg"
+
     reponse = requests.get(image_url)
     with open(f"data/images/{nom_image}.jpg", "wb") as fichier:
         fichier.write(reponse.content)

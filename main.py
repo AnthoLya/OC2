@@ -12,7 +12,7 @@ for titre_categorie, url_categorie in tous_les_urls_categories.items():
     for url_livre in urls_livres.values():
         n += 1
         print(f"Je commence l'extraction du livre {n}")
-        livre = extraire_infos_livre(url_livre)
+        livre = extraire_infos_livre(url_livre, n)
         print("Extraction infos livre terminée")
         tous_les_livres.append(livre)
     print("je commence le CSV")
