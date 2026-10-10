@@ -1,4 +1,6 @@
-data
-.env
-.venv
-/.idea
+data/
+.env/
+.venv/
+.idea/
+env/
+venv/
