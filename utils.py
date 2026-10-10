@@ -43,18 +43,30 @@ def extraire_urls_livres(url_categorie):
         reponse = requests.get(url_categorie)
         print("Page catégorie :", url_categorie)
         soup = BeautifulSoup(reponse.text, "html.parser")
+
+        pagination = soup.select_one(".form-horizontal strong")
+        nombre_livres_categorie = int(pagination.get_text(strip=True))
+        nom_categorie = soup.find("h1").get_text(strip=True)
         urls = soup.find_all("article", class_="product_pod")
         for resultat in urls:
 
-            titre_livre = resultat.find("h3").get_text(strip=True)
+            titre_livre = resultat.find("h3").find("a")["title"]
             lien_url = resultat.find("a")["href"]
             lien_url = urljoin(url_categorie, lien_url)
+            if titre_livre in urls_livres:
+                titre_livre = titre_livre + " (doublon)"
+
             urls_livres[titre_livre] = lien_url
+
+
         suivant = soup.find("li", class_="next")
         if suivant:
             url_categorie = urljoin(url_categorie, suivant.find("a")["href"])
         else:
             url_categorie = None
+    print("Catégorie :", nom_categorie)
+    print("Nombre de livres annoncés :", nombre_livres_categorie)
+    print("Nombre d'URL récupérées :", len(urls_livres))
     return urls_livres
 
 
