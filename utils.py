@@ -8,6 +8,15 @@ import re
 
 os.makedirs("data/images", exist_ok=True)
 
+def letter_to_number(letter):
+    letter_mapping = {
+        "One": 1,
+        "Two": 2,
+        "Three": 3,
+        "Four": 4,
+        "Five": 5
+    }
+    return letter_mapping.get(letter, 0)
 
 def convertir_en_nombre(a):
     nombre = ""
@@ -15,7 +24,7 @@ def convertir_en_nombre(a):
     for caractere in texte:
         if caractere.isdigit() or caractere == ".":
             nombre = nombre + caractere
-    nombre = float(nombre)
+    nombre = str(float(nombre)) + " £"
     return nombre
 
 def nettoyer_nom_fichier(nom):
@@ -134,9 +143,13 @@ def extraire_infos_livre(url, n):
     nombre = int(nombre)
     dictionnaire_categorie["number_available"] = nombre
 
-    # le prix je le garde en nombre aussi
+
+    # le prix je le garde en nombre aussi avec le symboles £
     dictionnaire_categorie["price_excluding_tax"] = convertir_en_nombre(dictionnaire_categorie["price_excluding_tax"])
     dictionnaire_categorie["price_including_tax"] = convertir_en_nombre(dictionnaire_categorie["price_including_tax"])
+
+    #je passe la notation du texte a un nombre d etoiles
+    dictionnaire_categorie["review_rating"] = letter_to_number(dictionnaire_categorie["review_rating"])
 
     # je remets tout dans l ordre
     dictionnaire_categorie_final = {
