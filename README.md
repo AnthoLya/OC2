@@ -9,12 +9,24 @@ Dans Data on retrouvera le CSV de chaques caterogies tandis que data regroupera 
 ### Créer l'environnement virtuel :
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
+```
+### Verifier la création de l'environnement :
+
+```bash
+ls -la .venv/
 ```
 
-### Activer l'environnement virtuel :
+
+### Activer l'environnement virtuel sous windows :
 ```bash
 .venv\Scripts\activate
+```
+
+### Activer l'environnement virtuel sous Linus/macOS :
+```bash
+source .venv/bin/activate
+#Vous devez voir (.venv.) dans votre console.
 ```
 
 ## Installation des modules :
