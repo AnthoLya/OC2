@@ -6,8 +6,11 @@ from urllib.parse import urljoin
 import os
 import re
 
+#permet de creer le dossier data/images dans la racine du dossier ou se trouve main.
 os.makedirs("data/images", exist_ok=True)
 
+
+#Cette fonction permet de transformer la notation en lettre par une notation en chiffre
 def letter_to_number(letter):
     letter_mapping = {
         "One": 1,
@@ -18,6 +21,8 @@ def letter_to_number(letter):
     }
     return letter_mapping.get(letter, 0)
 
+
+#Cette fonction permet de convertir le prix en un nombre decimal ( garder que les chiffres et le . ) et rajoute £ a la fin
 def convertir_en_nombre(a):
     nombre = ""
     texte = a
@@ -27,10 +32,14 @@ def convertir_en_nombre(a):
     nombre = str(float(nombre)) + " £"
     return nombre
 
+
+#Cette fonction permet de remplacer dans titre tous les caracteres interdit pour l'enregistrement de l'image en jpg.
 def nettoyer_nom_fichier(nom):
     nom = re.sub(r'[\\/:*?"<>|]', '', nom)
     return nom.strip()
 
+
+#Cette fonction permet d extraire depuis l url du site, l url de chaque categorie
 def extraire_urls_categories(url_base):
     reponse = requests.get(url_base)
     soup = BeautifulSoup(reponse.text, "html.parser")
@@ -46,6 +55,9 @@ def extraire_urls_categories(url_base):
     return tous_les_urls_categories
 
 
+#Cette fonction permet d extraire dans chaque categorie, l url des livres ( en parcourant les pages suivantes si elles existent )
+#Il y a egalement un compteur n lié au nombre d url extrait, comparé au nombre de livre present dans la categorie
+# ( utile pr trouver les livres manquants lors de l exrtaction et se rendre compte qu'il y avait nottament un doublon. )
 def extraire_urls_livres(url_categorie):
     urls_livres = {}
     while url_categorie:
@@ -79,7 +91,9 @@ def extraire_urls_livres(url_categorie):
     return urls_livres
 
 
+#Cette fonction permet d extraire les infos recherchées dans l'html et de les transformer pour certaines.
 def extraire_infos_livre(url, n):
+    #creation du dictionnaire vide
     dictionnaire_categorie = {}
 
     # je recup le html
@@ -89,15 +103,15 @@ def extraire_infos_livre(url, n):
     # je cherche une info et l ajoute au dictionnaire
     lignes = soup.find_all("tr")
     dictionnaire_categorie["product_page_url"] = url
-
+    #je recupere le titre qui se trouve dans la balise h1 et je l'ajout au dictionnaire
     titre = soup.find("h1").get_text(strip=True)
     dictionnaire_categorie["title"] = titre
-
+    #pour chaque ligne trouvée dans "tr", rajoute au dictionnaire le couple valeur/clé correspondant a th/td
     for ligne in lignes:
         valeur = ligne.find("th").get_text(strip=True)
         donnee = ligne.find("td").get_text(strip=True)
         dictionnaire_categorie[valeur] = donnee
-
+    #Recherche dans la balise div avec id product_description le prochain "p" ou se trouve le texte de la description du livre. si pas de description on le dit.
     description = soup.find("div", id="product_description")
     if description:
         description = description.find_next_sibling("p")
@@ -108,17 +122,20 @@ def extraire_infos_livre(url, n):
     else:
         dictionnaire_categorie["product_description"] = "pas de description"
 
-
+    #rating se trouve dans le p class star-rating, on cherche a quoi est egal la deuxieme chaine de caractere car cest de la forme "star-rating Three" et on l'ajoute
     rating = soup.find("p", class_="star-rating")
     dictionnaire_categorie["review_rating"]  = rating["class"][1]
-
     category = soup.find("ul", class_="breadcrumb").find_all("li")
     dictionnaire_categorie["category"]  = category[2].get_text(strip=True)
+    # je passe la notation du texte a un nombre avec la fonction letter to number
+    dictionnaire_categorie["review_rating"] = letter_to_number(dictionnaire_categorie["review_rating"])
 
+    #ici je recherche l'url de l'image du livre, j utilise url join pour reconstituer l'url complete.
     image = soup.find("img")
     image_url = urljoin(url, image["src"])
     dictionnaire_categorie["image_url"] = image_url
 
+    #j utilise ma fonction pr nettoyer mon nom de fichier avant de l'engeristrer en local n:05d permet de dire que mon comptage n a 5 decimal et quon place des 0 quand cest "vide"
     nom_image = nettoyer_nom_fichier(dictionnaire_categorie["title"])
     nom_image = f"{n:05d} - {nom_image}"
     dictionnaire_categorie["lien_image"] = f"images/{nom_image}.jpg"
@@ -143,15 +160,11 @@ def extraire_infos_livre(url, n):
     nombre = int(nombre)
     dictionnaire_categorie["number_available"] = nombre
 
-
     # le prix je le garde en nombre aussi avec le symboles £
     dictionnaire_categorie["price_excluding_tax"] = convertir_en_nombre(dictionnaire_categorie["price_excluding_tax"])
     dictionnaire_categorie["price_including_tax"] = convertir_en_nombre(dictionnaire_categorie["price_including_tax"])
 
-    #je passe la notation du texte a un nombre d etoiles
-    dictionnaire_categorie["review_rating"] = letter_to_number(dictionnaire_categorie["review_rating"])
-
-    # je remets tout dans l ordre
+    # je remets tout dans l ordre dans un nouveau dictionnaire
     dictionnaire_categorie_final = {
         "product_page_url": dictionnaire_categorie["product_page_url"],
         "universal_product_code (upc)": dictionnaire_categorie["universal_product_code (upc)"],
@@ -165,10 +178,9 @@ def extraire_infos_livre(url, n):
         "image_url": dictionnaire_categorie["image_url"],
         "lien_image": dictionnaire_categorie["lien_image"]
     }
-
     return dictionnaire_categorie_final
 
-
+#permet ici de creer le CSV a l aide du dictionnaire cest pour ca qu'on a dictWrtier et le dictionnaire ensuite avec fielnames pr l'entete des colonnes.
 def charger_csv(titre_categorie, livres):
     data_categorie = "data/data_" + titre_categorie + ".csv"
     with open(data_categorie, "w", newline="", encoding="utf-8") as csvfile:
